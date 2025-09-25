@@ -108,4 +108,31 @@ app.get("/history/:employee", async (req, res) => {
   }
 });
 
+// PUT /schedule/:id -> update schedule
+app.put("/schedule/:id", async (req, res) => {
+  try {
+    const { employee, device, day, time } = req.body;
+    const schedule = await Schedule.findByIdAndUpdate(
+      req.params.id,
+      { employee, device, day, time },
+      { new: true }
+    );
+    if (!schedule) return res.status(404).json({ error: "Not found" });
+    res.json({ message: "Updated successfully", schedule });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /schedule/:id -> delete schedule
+app.delete("/schedule/:id", async (req, res) => {
+  try {
+    const schedule = await Schedule.findByIdAndDelete(req.params.id);
+    if (!schedule) return res.status(404).json({ error: "Not found" });
+    res.json({ message: "Deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(5000, () => console.log("Server running on port 5000"));
