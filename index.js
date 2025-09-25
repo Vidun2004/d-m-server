@@ -135,4 +135,14 @@ app.delete("/schedule/:id", async (req, res) => {
   }
 });
 
+// GET /employees -> list unique employees
+app.get("/employees", async (req, res) => {
+  try {
+    const employees = await History.distinct("employee");
+    res.json(employees);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(5000, () => console.log("Server running on port 5000"));
