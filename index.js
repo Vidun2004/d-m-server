@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import ExcelJS from "exceljs";
 import dotenv from "dotenv";
 
 import Schedule from "./models/Schedule.js";
@@ -141,6 +142,45 @@ app.get("/employees", async (req, res) => {
     const employees = await History.distinct("employee");
     res.json(employees);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /history/export -> download Excel file of all history
+app.get("/history/export", async (req, res) => {
+  try {
+    const allLogs = await History.find().sort({ employee: 1, cleanedAt: -1 });
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("History");
+
+    // Add header row
+    worksheet.columns = [
+      { header: "Employee", key: "employee", width: 25 },
+      { header: "Device", key: "device", width: 25 },
+      { header: "Cleaned At", key: "cleanedAt", width: 25 },
+    ];
+
+    // Add rows
+    allLogs.forEach((log) => {
+      worksheet.addRow({
+        employee: log.employee,
+        device: log.device,
+        cleanedAt: log.cleanedAt.toLocaleString(),
+      });
+    });
+
+    // Set response headers for download
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", 'attachment; filename="history.xlsx"');
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
